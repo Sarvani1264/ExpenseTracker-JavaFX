@@ -60,7 +60,8 @@ public class HomePageController {
         LocalDateTime today = LocalDateTime.now();
         int present_month = today.getMonthValue();
         int present_year = today.getYear();
-        String sql = "SELECT DAY(date_time) AS day,SUM(amount_spent) AS amount FROM expenses WHERE MONTH(date_time) = ? AND YEAR(date_time)=? AND user_id=? GROUP BY date_time ORDER BY date_time";
+        int maxAmount = 0;
+        String sql = "SELECT DAY(date_time) AS day,SUM(Amount_spent) AS amount FROM expenses WHERE MONTH(date_time) = ? AND YEAR(date_time)=? AND user_id=? GROUP BY DAY(date_time) ORDER BY DAY(date_time)";
         try{
             ps= con.prepareStatement(sql);
             ps.setInt(1,present_month);
@@ -72,10 +73,17 @@ public class HomePageController {
             while(rs.next()){
                 String day=String.valueOf(rs.getInt("day"));
                 int amount= rs.getInt("amount");
+                maxAmount = Math.max(maxAmount, amount);
                 series.getData().add(new XYChart.Data<>(day,amount));
             }
             exp_barchart.getData().clear();
             exp_barchart.getData().add(series);
+
+            NumberAxis yAxis = (NumberAxis) exp_barchart.getYAxis();
+            yAxis.setAutoRanging(false);
+            yAxis.setLowerBound(0);
+            yAxis.setUpperBound((Math.ceil((maxAmount+1000) / 1000.0)) * 1000);
+            yAxis.setTickUnit(1000);
         }catch (Exception e){
             e.printStackTrace();
         }
